@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,6 +58,14 @@ static void MX_GPIO_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_SPI3_Init(void);
 /* USER CODE BEGIN PFP */
+int _write(int file, char *ptr, int len)
+{
+  /* Implement your write code here, this is used by puts and printf for example */
+  int i=0;
+  for(i=0 ; i<len ; i++)
+    ITM_SendChar((*ptr++));
+  return len;
+}
 
 /* USER CODE END PFP */
 
@@ -96,6 +104,8 @@ int main(void)
   MX_GPIO_Init();
   MX_I2S2_Init();
   MX_SPI3_Init();
+
+  printf("Hello world!\n");
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
