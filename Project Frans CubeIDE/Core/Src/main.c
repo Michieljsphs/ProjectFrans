@@ -129,6 +129,7 @@ int main(void)
 	  //readAudioData;
 	  //readAudioData = 0x01020304;
 	  printf("data = %d \n", readAudioData);
+	  printBits(sizeof(readAudioData), &readAudioData);
 	  //uint32_t zaaddata[2] = {0x01020304, 0x05060708};
 	  //int butje = HAL_UART_Transmit(&huart3, readAudioData, sizeof(readAudioData), 1000);
 	  //int result = HAL_UART_Transmit(&huart3, zaaddata, sizeof(zaaddata), 1000);
@@ -207,7 +208,7 @@ static void MX_I2S2_Init(void)
   /* USER CODE END I2S2_Init 1 */
   hi2s2.Instance = SPI2;
   hi2s2.Init.Mode = I2S_MODE_SLAVE_RX;
-  hi2s2.Init.Standard = I2S_STANDARD_PHILIPS;
+  hi2s2.Init.Standard = I2S_STANDARD_MSB;
   hi2s2.Init.DataFormat = I2S_DATAFORMAT_24B;
   hi2s2.Init.MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
   hi2s2.Init.AudioFreq = I2S_AUDIOFREQ_48K;
@@ -329,7 +330,8 @@ static uint32_t I2SReadData(void)
   uint32_t value = 0;
 
   //HAL_StatusTypeDef HAL_I2S_Receive(I2S_HandleTypeDef *hi2s, uint16_t *pData, uint16_t Size, uint32_t Timeout)
-  int result = HAL_I2S_Receive(&hi2s2, &readAudioData, sizeof(readAudioData), 1);
+  //int result = HAL_I2S_Receive(&hi2s2, &readAudioData, sizeof(readAudioData), 1);
+  int result = HAL_I2S_Receive(&hi2s2, &readAudioData, 2, 1);
 
   if (result == HAL_OK)
   {
@@ -342,6 +344,24 @@ static uint32_t I2SReadData(void)
     printf("fail, errorcode = %d\n", result);
   }
   return value;
+}
+
+void printBits(size_t const size, void const * const ptr)
+{
+    unsigned char *b = (unsigned char*) ptr;
+    unsigned char byte;
+    int i, j;
+
+    for (i=size-1;i>=0;i--)
+    {
+        for (j=7;j>=0;j--)
+        {
+            byte = (b[i] >> j) & 1;
+            printf("%u", byte);
+        }
+    }
+    puts("");
+    printf("\n");
 }
 /* USER CODE END 4 */
 
