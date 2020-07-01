@@ -1,0 +1,13 @@
+
+Project Frans CubeIDE/.settings/language.settings.xml
+*.d
+*.su
+*.o
+*.mk
+*.map
+*.list
+*.elf
+*.bin
+Project Frans CubeIDE/Debug/makefile
+Project Frans CubeIDE/.settings/language.settings.xml
+*.xml
