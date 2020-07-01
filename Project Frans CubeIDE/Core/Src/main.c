@@ -1,5 +1,3 @@
-// laurens here
-
 /* USER CODE BEGIN Header */
 /**
   **************************
@@ -47,6 +45,8 @@ I2S_HandleTypeDef hi2s2;
 
 SPI_HandleTypeDef hspi3;
 
+UART_HandleTypeDef huart2;
+
 /* USER CODE BEGIN PV */
 uint8_t outputBuffer[4];
 
@@ -57,6 +57,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2S2_Init(void);
 static void MX_SPI3_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 int _write(int file, char *ptr, int len)
 {
@@ -104,8 +105,7 @@ int main(void)
   MX_GPIO_Init();
   MX_I2S2_Init();
   MX_SPI3_Init();
-
-  printf("Hello world!\n");
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -123,12 +123,12 @@ int main(void)
 
 	  HAL_GPIO_TogglePin(LD6_GPIO_Port,LD6_Pin); //Toggle LED
 
-	  HAL_Delay(1000); //Delay 1 Seconds
+	  //HAL_Delay(100); //Delay 1 Seconds
 
 	  I2SReadData();
 	  //readAudioData;
-	  readAudioData = 0x01020304;
-	  printf("test");
+	  //readAudioData = 0x01020304;
+	  printf("data = %d \n", readAudioData);
 	  //uint32_t zaaddata[2] = {0x01020304, 0x05060708};
 	  //int butje = HAL_UART_Transmit(&huart3, readAudioData, sizeof(readAudioData), 1000);
 	  //int result = HAL_UART_Transmit(&huart3, zaaddata, sizeof(zaaddata), 1000);
@@ -207,7 +207,7 @@ static void MX_I2S2_Init(void)
   /* USER CODE END I2S2_Init 1 */
   hi2s2.Instance = SPI2;
   hi2s2.Init.Mode = I2S_MODE_SLAVE_RX;
-  hi2s2.Init.Standard = I2S_STANDARD_MSB;
+  hi2s2.Init.Standard = I2S_STANDARD_PHILIPS;
   hi2s2.Init.DataFormat = I2S_DATAFORMAT_24B;
   hi2s2.Init.MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
   hi2s2.Init.AudioFreq = I2S_AUDIOFREQ_48K;
@@ -263,6 +263,39 @@ static void MX_SPI3_Init(void)
 }
 
 /**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -272,9 +305,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -301,10 +334,12 @@ static uint32_t I2SReadData(void)
   if (result == HAL_OK)
   {
     value = 1; // yaay
+    //printf("success\n");
   }
   else
   {
     value = 0; // naay
+    printf("fail, errorcode = %d\n", result);
   }
   return value;
 }
