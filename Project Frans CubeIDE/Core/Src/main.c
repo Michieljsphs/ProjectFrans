@@ -107,7 +107,7 @@ int main(void)
   MX_SPI3_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  max_init(); // setup the max7221 chips
+  MAX_Init(); // setup the max7221 chips
 
   /* USER CODE END 2 */
 
@@ -124,17 +124,33 @@ int main(void)
 
 	  HAL_GPIO_TogglePin(LD6_GPIO_Port,LD6_Pin); //Toggle LED
 
-	  //HAL_Delay(100); //Delay 1 Seconds
-
-	  I2SReadData();
+	clearDisplay();
+	HAL_Delay(500);
+	write_max(0x08, 0x10, 0x08, 0x0F);
+	HAL_Delay(500);
+	write_max(0x07, 0x10, 0x07, 0x0F);
+	HAL_Delay(500);
+	write_max(0x06, 0x10, 0x06, 0x0F);
+	HAL_Delay(500);
+	write_max(0x05, 0x10, 0x05, 0x0F);
+	HAL_Delay(500);
+	write_max(0x04, 0x10, 0x04, 0x0F);
+	HAL_Delay(500);
+	write_max(0x03, 0x10, 0x03, 0x0F);
+	HAL_Delay(500);
+	write_max(0x02, 0x10, 0x02, 0x0F);
+	HAL_Delay(500);
+	write_max(0x01, 0x10, 0x01, 0x0F);
+	HAL_Delay(500);
+	  //I2SReadData();
 	  //readAudioData;
 	  //readAudioData = 0x01020304;
-	  printf("data = %d \n", readAudioData);
-	  printBits(sizeof(readAudioData), &readAudioData);
+	  //printf("data = %d \n", readAudioData);
+	  //printBits(sizeof(readAudioData), &readAudioData);
 	  //uint32_t zaaddata[2] = {0x01020304, 0x05060708};
 	  //int butje = HAL_UART_Transmit(&huart3, readAudioData, sizeof(readAudioData), 1000);
 	  //int result = HAL_UART_Transmit(&huart3, zaaddata, sizeof(zaaddata), 1000);
-	  int banaan = 2;
+
   }
   /* USER CODE END 3 */
 }
@@ -313,14 +329,14 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LD6_Pin|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : LD6_Pin */
-  GPIO_InitStruct.Pin = LD6_Pin;
+  /*Configure GPIO pins : LD6_Pin PD2 PD3 PD4 */
+  GPIO_InitStruct.Pin = LD6_Pin|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD6_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
 }
 
@@ -330,16 +346,17 @@ void write_byte (uint8_t byte)
 {
 	for (int i =0; i<8; i++)
 	{
-		HAL_GPIO_WritePin (GPIOA, GPIO_PIN_5, 0);  // pull the clock pin low
-		HAL_GPIO_WritePin (GPIOA, GPIO_PIN_7, byte&0x80);  // write the MSB bit to the data pin
+		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_3, 0);  // pull the clock pin low
+		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_4, byte&0x80);  // write the MSB bit to the data pin
 		byte = byte<<1;  // shift left
-		HAL_GPIO_WritePin (GPIOA, GPIO_PIN_5, 1);  // pull the clock pin HIGH
+		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_3, 1);  // pull the clock pin HIGH
 	}
 }
 
+// GPIOD 2 = load, GPIOD 3 = clk, GPIOD 4 = data
 void write_max(uint8_t upperAddress, uint8_t upperValue, uint8_t lowerAddress, uint8_t lowerValue)
 {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, 0);  // pull the CS pin LOW
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 0);  // pull the CS pin LOW
 
 	// Send the register address
 	write_byte(upperAddress);
@@ -347,30 +364,37 @@ void write_max(uint8_t upperAddress, uint8_t upperValue, uint8_t lowerAddress, u
 	write_byte(lowerAddress);
 	write_byte(lowerValue);
 
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, 1);  // pull the CS pin HIGH
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 1);  // pull the CS pin HIGH
 }
 
-void clearDisplay() {
+void clearDisplay()
+{
   for (int i = 0x0; i <= 0x8; i++) {
 	  write_max(i, 0x00, i, 0x00);
     //delay(50);
   }
 }
 
-void max_init()
+void MAX_Init()
 {
   // Run test
-  // All LED segments should light up
-	write_max(0x0F, 0x01, 0x0F, 0x01);
-	//delay(1000);
-	write_max(0x0F, 0x00, 0x0F, 0x00);
+//  // All LED segments should light up
+//	write_max(0x0F, 0x01, 0x0F, 0x01);
+//	HAL_Delay(1000);
+//	write_max(0x0F, 0x00, 0x0F, 0x00);
+//
+//  // Use medium intensity
+//	write_max(0x0A, 0x07, 0x0A, 0x07);
+//
+//  // Turn on chip
+//	write_max(0x0C, 0x00, 0x0C, 0x00);
+//	write_max(0x0C, 0x01, 0x0C, 0x01);
 
-  // Use medium intensity
-	write_max(0x0A, 0x07, 0x0A, 0x07);
-
-  // Turn on chip
-	write_max(0x0C, 0x00, 0x0C, 0x00);
-	write_max(0x0C, 0x01, 0x0C, 0x01);
+	write_max(0x09, 0x00, 0x09, 0x00);       //  no decoding
+	write_max(0x0a, 0x0A, 0x0a, 0x0A);       //  brightness intensity
+	write_max(0x0b, 0x07, 0x0b, 0x07);       //  scan limit = 8 LEDs
+	write_max(0x0c, 0x01, 0x0c, 0x01);       //  power down =0,normal mode = 1
+	write_max(0x0f, 0x00, 0x0f, 0x00);       //  no test display
 
 	clearDisplay();
 }
