@@ -107,6 +107,7 @@ int main(void)
   MX_SPI3_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  max_init(); // setup the max7221 chips
 
   /* USER CODE END 2 */
 
@@ -325,13 +326,83 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+void write_byte (uint8_t byte)
+{
+	for (int i =0; i<8; i++)
+	{
+		HAL_GPIO_WritePin (GPIOA, GPIO_PIN_5, 0);  // pull the clock pin low
+		HAL_GPIO_WritePin (GPIOA, GPIO_PIN_7, byte&0x80);  // write the MSB bit to the data pin
+		byte = byte<<1;  // shift left
+		HAL_GPIO_WritePin (GPIOA, GPIO_PIN_5, 1);  // pull the clock pin HIGH
+	}
+}
+
+void write_max(uint8_t upperAddress, uint8_t upperValue, uint8_t lowerAddress, uint8_t lowerValue)
+{
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, 0);  // pull the CS pin LOW
+
+	// Send the register address
+	write_byte(upperAddress);
+	write_byte(upperValue);
+	write_byte(lowerAddress);
+	write_byte(lowerValue);
+
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, 1);  // pull the CS pin HIGH
+}
+
+void clearDisplay() {
+  for (int i = 0x0; i <= 0x8; i++) {
+	  write_max(i, 0x00, i, 0x00);
+    //delay(50);
+  }
+}
+
+void max_init()
+{
+  // Run test
+  // All LED segments should light up
+	write_max(0x0F, 0x01, 0x0F, 0x01);
+	//delay(1000);
+	write_max(0x0F, 0x00, 0x0F, 0x00);
+
+  // Use medium intensity
+	write_max(0x0A, 0x07, 0x0A, 0x07);
+
+  // Turn on chip
+	write_max(0x0C, 0x00, 0x0C, 0x00);
+	write_max(0x0C, 0x01, 0x0C, 0x01);
+
+	clearDisplay();
+}
+
+
 static uint32_t I2SReadData(void)
 {
   uint32_t value = 0;
 
   //HAL_StatusTypeDef HAL_I2S_Receive(I2S_HandleTypeDef *hi2s, uint16_t *pData, uint16_t Size, uint32_t Timeout)
+
+  /**
+    * @brief  Receive an amount of data in blocking mode
+    * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
+    *         the configuration information for I2S module
+    * @param  pData a 16-bit pointer to data buffer.
+    * @param  Size number of data sample to be sent:
+    * @note   When a 16-bit data frame or a 16-bit data frame extended is selected during the I2S
+    *         configuration phase, the Size parameter means the number of 16-bit data length
+    *         in the transaction and when a 24-bit data frame or a 32-bit data frame is selected
+    *         the Size parameter means the number of 16-bit data length.
+    * @param  Timeout Timeout duration
+    * @note   The I2S is kept enabled at the end of transaction to avoid the clock de-synchronization
+    *         between Master and Slave(example: audio streaming).
+    * @note   In I2S Master Receiver mode, just after enabling the peripheral the clock will be generate
+    *         in continuous way and as the I2S is not disabled at the end of the I2S transaction.
+    * @retval HAL status
+    */
   //int result = HAL_I2S_Receive(&hi2s2, &readAudioData, sizeof(readAudioData), 1);
-  int result = HAL_I2S_Receive(&hi2s2, &readAudioData, 2, 1);
+  int result = HAL_I2S_Receive(&hi2s2, &readAudioData, 2, 100);
+
+
 
   if (result == HAL_OK)
   {
