@@ -47,6 +47,73 @@ SPI_HandleTypeDef hspi3;
 
 UART_HandleTypeDef huart2;
 
+int ledArray[64][2] = {
+  {0x08, 0x08},
+  {0x08, 0x04},
+  {0x08, 0x02},
+  {0x08, 0x01},
+  {0x07, 0x08},
+  {0x07, 0x04},
+  {0x07, 0x02},
+  {0x07, 0x01},
+  {0x06, 0x08},
+  {0x06, 0x04},
+  {0x06, 0x02},
+  {0x06, 0x01},
+  {0x05, 0x08},
+  {0x05, 0x04},
+  {0x05, 0x02},
+  {0x05, 0x01},
+  {0x04, 0x08},
+  {0x04, 0x04},
+  {0x04, 0x02},
+  {0x04, 0x01},
+  {0x03, 0x08},
+  {0x03, 0x04},
+  {0x03, 0x02},
+  {0x03, 0x01},
+  {0x02, 0x08},
+  {0x02, 0x04},
+  {0x02, 0x02},
+  {0x02, 0x01},
+  {0x01, 0x08},
+  {0x01, 0x04},
+  {0x01, 0x02},
+  {0x01, 0x01},
+  {0x08, 0x08},
+  {0x08, 0x04},
+  {0x08, 0x02},
+  {0x08, 0x01},
+  {0x07, 0x08},
+  {0x07, 0x04},
+  {0x07, 0x02},
+  {0x07, 0x01},
+  {0x06, 0x08},
+  {0x06, 0x04},
+  {0x06, 0x02},
+  {0x06, 0x11},
+  {0x05, 0x88},
+  {0x05, 0x44},
+  {0x05, 0x22},
+  {0x05, 0x11},
+  {0x04, 0x88},
+  {0x04, 0x44},
+  {0x04, 0x22},
+  {0x04, 0x11},
+  {0x03, 0x88},
+  {0x03, 0x40},
+  {0x03, 0x20},
+  {0x03, 0x10},
+  {0x02, 0x80},
+  {0x02, 0x40},
+  {0x02, 0x20},
+  {0x02, 0x10},
+  {0x01, 0x80},
+  {0x01, 0x40},
+  {0x01, 0x20},
+  {0x01, 0x10}
+};
+
 /* USER CODE BEGIN PV */
 uint8_t outputBuffer[4];
 
@@ -124,32 +191,27 @@ int main(void)
 
 	  HAL_GPIO_TogglePin(LD6_GPIO_Port,LD6_Pin); //Toggle LED
 
+//	clearDisplay();
+//	HAL_Delay(500);
+//	write_max(0x08, 0x10, 0x08, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x07, 0x10, 0x07, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x06, 0x10, 0x06, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x05, 0x10, 0x05, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x04, 0x10, 0x04, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x03, 0x10, 0x03, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x02, 0x10, 0x02, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x01, 0x10, 0x01, 0x0F);
+//	HAL_Delay(500);
+
 	clearDisplay();
-	HAL_Delay(500);
-	write_max(0x08, 0x10, 0x08, 0x0F);
-	HAL_Delay(500);
-	write_max(0x07, 0x10, 0x07, 0x0F);
-	HAL_Delay(500);
-	write_max(0x06, 0x10, 0x06, 0x0F);
-	HAL_Delay(500);
-	write_max(0x05, 0x10, 0x05, 0x0F);
-	HAL_Delay(500);
-	write_max(0x04, 0x10, 0x04, 0x0F);
-	HAL_Delay(500);
-	write_max(0x03, 0x10, 0x03, 0x0F);
-	HAL_Delay(500);
-	write_max(0x02, 0x10, 0x02, 0x0F);
-	HAL_Delay(500);
-	write_max(0x01, 0x10, 0x01, 0x0F);
-	HAL_Delay(500);
-	  //I2SReadData();
-	  //readAudioData;
-	  //readAudioData = 0x01020304;
-	  //printf("data = %d \n", readAudioData);
-	  //printBits(sizeof(readAudioData), &readAudioData);
-	  //uint32_t zaaddata[2] = {0x01020304, 0x05060708};
-	  //int butje = HAL_UART_Transmit(&huart3, readAudioData, sizeof(readAudioData), 1000);
-	  //int result = HAL_UART_Transmit(&huart3, zaaddata, sizeof(zaaddata), 1000);
+	fillTest();
 
   }
   /* USER CODE END 3 */
@@ -372,6 +434,75 @@ void clearDisplay()
   for (int i = 0x0; i <= 0x8; i++) {
 	  write_max(i, 0x00, i, 0x00);
     //delay(50);
+  }
+}
+
+void enableBlock(int blockID, bool isUpper) {
+  //int address = 0, data = 0;
+  int lowerAddress = 0, upperAddress = 0, upperData = 0;
+
+
+
+  if (isUpper == true) {
+    int index = (blockID - 1) * 4; // 11 naar 40 vertalen
+
+    for (int i = index; i < (index + 4); i++) {
+      upperAddress = 16 - blockID;
+      upperData = upperData | ledArray[i][1];
+    }
+
+    write_max(upperAddress, upperData, 0, 0);
+  }
+  else {
+    lowerAddress = 9 - blockID;
+    write_max(0, 0, lowerAddress, 0x0F);
+  }
+}
+
+void fillBarTo(int value) {
+	if (value == 33){
+		int banaan = 1;
+	}
+
+  int lowerAddress = 0, lowerData = 0, upperAddress = 0, upperData = 0;
+  int enabledBlocks = value / 4;
+  //int restValue = value % 4;
+
+  //Serial.print("enabledBlock: ");
+  //Serial.println(enabledBlocks, HEX);
+  if (enabledBlocks > 7) {
+    for (int i = enabledBlocks * 4; i < value; i++) {
+      upperAddress = upperAddress | ledArray[i][0];
+      upperData = upperData | ledArray[i][1];
+    }
+  }
+  if ( enabledBlocks > 8 ){
+	for (int i = 0; i < enabledBlocks; i++) {
+	  enableBlock(enabledBlocks, true);
+	}
+  }
+  if (enabledBlocks <= 7) {
+    for (int i = enabledBlocks * 4; i < value; i++) {
+      lowerAddress = lowerAddress | ledArray[i][0];
+      lowerData = lowerData | ledArray[i][1];
+    }
+    for (int i = 0; i < enabledBlocks; i++) {
+      enableBlock(enabledBlocks, false);
+    }
+  }
+  //Serial.println("zaad");
+  //Serial.println(lowerAddress, HEX);
+  //Serial.println(lowerData, HEX);
+  write_max(upperAddress, upperData, lowerAddress, lowerData);
+
+}
+
+void fillTest() {
+  clearDisplay();
+  HAL_Delay(500);
+  for (int i = 0; i < 65; i++) {
+	  HAL_Delay(200);
+    fillBarTo(i);
   }
 }
 

@@ -32,6 +32,9 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdbool.h>
+
+
 int samples[20];
 int tempI2Swaarde;
 static uint32_t I2SReadData(void);
@@ -39,6 +42,11 @@ void MAX_Init();
 void clearDisplay();
 void write_max(uint8_t upperAddress, uint8_t upperValue, uint8_t lowerAddress, uint8_t lowerValue);
 void write_byte (uint8_t byte);
+void fillTest();
+void fillBarTo(int value);
+void enableBlock(int blockID, bool isUpper);
+
+
 
 typedef struct int24{
     unsigned int data : 24;
