@@ -23,7 +23,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,6 +47,73 @@ SPI_HandleTypeDef hspi3;
 
 UART_HandleTypeDef huart2;
 
+int ledArray[64][2] = {
+  {0x08, 0x08},
+  {0x08, 0x04},
+  {0x08, 0x02},
+  {0x08, 0x01},
+  {0x07, 0x08},
+  {0x07, 0x04},
+  {0x07, 0x02},
+  {0x07, 0x01},
+  {0x06, 0x08},
+  {0x06, 0x04},
+  {0x06, 0x02},
+  {0x06, 0x01},
+  {0x05, 0x08},
+  {0x05, 0x04},
+  {0x05, 0x02},
+  {0x05, 0x01},
+  {0x04, 0x08},
+  {0x04, 0x04},
+  {0x04, 0x02},
+  {0x04, 0x01},
+  {0x03, 0x08},
+  {0x03, 0x04},
+  {0x03, 0x02},
+  {0x03, 0x01},
+  {0x02, 0x08},
+  {0x02, 0x04},
+  {0x02, 0x02},
+  {0x02, 0x01},
+  {0x01, 0x08},
+  {0x01, 0x04},
+  {0x01, 0x02},
+  {0x01, 0x01},
+  {0x08, 0x08},
+  {0x08, 0x04},
+  {0x08, 0x02},
+  {0x08, 0x01},
+  {0x07, 0x08},
+  {0x07, 0x04},
+  {0x07, 0x02},
+  {0x07, 0x01},
+  {0x06, 0x08},
+  {0x06, 0x04},
+  {0x06, 0x02},
+  {0x06, 0x11},
+  {0x05, 0x88},
+  {0x05, 0x44},
+  {0x05, 0x22},
+  {0x05, 0x11},
+  {0x04, 0x88},
+  {0x04, 0x44},
+  {0x04, 0x22},
+  {0x04, 0x11},
+  {0x03, 0x88},
+  {0x03, 0x40},
+  {0x03, 0x20},
+  {0x03, 0x10},
+  {0x02, 0x80},
+  {0x02, 0x40},
+  {0x02, 0x20},
+  {0x02, 0x10},
+  {0x01, 0x80},
+  {0x01, 0x40},
+  {0x01, 0x20},
+  {0x01, 0x10}
+};
+
 /* USER CODE BEGIN PV */
 uint8_t outputBuffer[4];
 
@@ -59,6 +126,14 @@ static void MX_I2S2_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
+int _write(int file, char *ptr, int len)
+{
+  /* Implement your write code here, this is used by puts and printf for example */
+  int i=0;
+  for(i=0 ; i<len ; i++)
+    ITM_SendChar((*ptr++));
+  return len;
+}
 
 /* USER CODE END PFP */
 
@@ -99,6 +174,7 @@ int main(void)
   MX_SPI3_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  MAX_Init(); // setup the max7221 chips
 
   /* USER CODE END 2 */
 
@@ -115,17 +191,28 @@ int main(void)
 
 	  HAL_GPIO_TogglePin(LD6_GPIO_Port,LD6_Pin); //Toggle LED
 
-	  HAL_Delay(1000); //Delay 1 Seconds
+//	clearDisplay();
+//	HAL_Delay(500);
+//	write_max(0x08, 0x10, 0x08, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x07, 0x10, 0x07, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x06, 0x10, 0x06, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x05, 0x10, 0x05, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x04, 0x10, 0x04, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x03, 0x10, 0x03, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x02, 0x10, 0x02, 0x0F);
+//	HAL_Delay(500);
+//	write_max(0x01, 0x10, 0x01, 0x0F);
+//	HAL_Delay(500);
 
-	  I2SReadData();
-	  //readAudioData;
-	  readAudioData = 0x01020304;
-	  char testpacket = "a";
-	  //printf("test");
-	  //uint32_t zaaddata[2] = {0x01020304, 0x05060708};
-	  HAL_UART_Transmit(&huart2, testpacket, sizeof(testpacket), 1000);
-	  //int result = HAL_UART_Transmit(&huart3, zaaddata, sizeof(zaaddata), 1000);
-	  int banaan = 2;
+	clearDisplay();
+	fillTest();
+
   }
   /* USER CODE END 3 */
 }
@@ -304,35 +391,203 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, LD6_Pin|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : LD6_Pin */
-  GPIO_InitStruct.Pin = LD6_Pin;
+  /*Configure GPIO pins : LD6_Pin PD2 PD3 PD4 */
+  GPIO_InitStruct.Pin = LD6_Pin|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD6_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
 }
 
 /* USER CODE BEGIN 4 */
+
+void write_byte (uint8_t byte)
+{
+	for (int i =0; i<8; i++)
+	{
+		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_3, 0);  // pull the clock pin low
+		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_4, byte&0x80);  // write the MSB bit to the data pin
+		byte = byte<<1;  // shift left
+		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_3, 1);  // pull the clock pin HIGH
+	}
+}
+
+// GPIOD 2 = load, GPIOD 3 = clk, GPIOD 4 = data
+void write_max(uint8_t upperAddress, uint8_t upperValue, uint8_t lowerAddress, uint8_t lowerValue)
+{
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 0);  // pull the CS pin LOW
+
+	// Send the register address
+	write_byte(upperAddress);
+	write_byte(upperValue);
+	write_byte(lowerAddress);
+	write_byte(lowerValue);
+
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 1);  // pull the CS pin HIGH
+}
+
+void clearDisplay()
+{
+  for (int i = 0x0; i <= 0x8; i++) {
+	  write_max(i, 0x00, i, 0x00);
+    //delay(50);
+  }
+}
+
+void enableBlock(int blockID, bool isUpper) {
+  //int address = 0, data = 0;
+  int lowerAddress = 0, upperAddress = 0, upperData = 0;
+
+
+
+  if (isUpper == true) {
+    int index = (blockID - 1) * 4; // 11 naar 40 vertalen
+
+    for (int i = index; i < (index + 4); i++) {
+      upperAddress = 16 - blockID;
+      upperData = upperData | ledArray[i][1];
+    }
+
+    write_max(upperAddress, upperData, 0, 0);
+  }
+  else {
+    lowerAddress = 9 - blockID;
+    write_max(0, 0, lowerAddress, 0x0F);
+  }
+}
+
+void fillBarTo(int value) {
+	if (value == 33){
+		int banaan = 1;
+	}
+
+  int lowerAddress = 0, lowerData = 0, upperAddress = 0, upperData = 0;
+  int enabledBlocks = value / 4;
+  //int restValue = value % 4;
+
+  //Serial.print("enabledBlock: ");
+  //Serial.println(enabledBlocks, HEX);
+  if (enabledBlocks > 7) {
+    for (int i = enabledBlocks * 4; i < value; i++) {
+      upperAddress = upperAddress | ledArray[i][0];
+      upperData = upperData | ledArray[i][1];
+    }
+  }
+  if ( enabledBlocks > 8 ){
+	for (int i = 0; i < enabledBlocks; i++) {
+	  enableBlock(enabledBlocks, true);
+	}
+  }
+  if (enabledBlocks <= 7) {
+    for (int i = enabledBlocks * 4; i < value; i++) {
+      lowerAddress = lowerAddress | ledArray[i][0];
+      lowerData = lowerData | ledArray[i][1];
+    }
+    for (int i = 0; i < enabledBlocks; i++) {
+      enableBlock(enabledBlocks, false);
+    }
+  }
+  //Serial.println("zaad");
+  //Serial.println(lowerAddress, HEX);
+  //Serial.println(lowerData, HEX);
+  write_max(upperAddress, upperData, lowerAddress, lowerData);
+
+}
+
+void fillTest() {
+  clearDisplay();
+  HAL_Delay(500);
+  for (int i = 0; i < 65; i++) {
+	  HAL_Delay(200);
+    fillBarTo(i);
+  }
+}
+
+void MAX_Init()
+{
+  // Run test
+//  // All LED segments should light up
+//	write_max(0x0F, 0x01, 0x0F, 0x01);
+//	HAL_Delay(1000);
+//	write_max(0x0F, 0x00, 0x0F, 0x00);
+//
+//  // Use medium intensity
+//	write_max(0x0A, 0x07, 0x0A, 0x07);
+//
+//  // Turn on chip
+//	write_max(0x0C, 0x00, 0x0C, 0x00);
+//	write_max(0x0C, 0x01, 0x0C, 0x01);
+
+	write_max(0x09, 0x00, 0x09, 0x00);       //  no decoding
+	write_max(0x0a, 0x0A, 0x0a, 0x0A);       //  brightness intensity
+	write_max(0x0b, 0x07, 0x0b, 0x07);       //  scan limit = 8 LEDs
+	write_max(0x0c, 0x01, 0x0c, 0x01);       //  power down =0,normal mode = 1
+	write_max(0x0f, 0x00, 0x0f, 0x00);       //  no test display
+
+	clearDisplay();
+}
+
 
 static uint32_t I2SReadData(void)
 {
   uint32_t value = 0;
 
   //HAL_StatusTypeDef HAL_I2S_Receive(I2S_HandleTypeDef *hi2s, uint16_t *pData, uint16_t Size, uint32_t Timeout)
-  int result = HAL_I2S_Receive(&hi2s2, &readAudioData, sizeof(readAudioData), 1);
+
+  /**
+    * @brief  Receive an amount of data in blocking mode
+    * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
+    *         the configuration information for I2S module
+    * @param  pData a 16-bit pointer to data buffer.
+    * @param  Size number of data sample to be sent:
+    * @note   When a 16-bit data frame or a 16-bit data frame extended is selected during the I2S
+    *         configuration phase, the Size parameter means the number of 16-bit data length
+    *         in the transaction and when a 24-bit data frame or a 32-bit data frame is selected
+    *         the Size parameter means the number of 16-bit data length.
+    * @param  Timeout Timeout duration
+    * @note   The I2S is kept enabled at the end of transaction to avoid the clock de-synchronization
+    *         between Master and Slave(example: audio streaming).
+    * @note   In I2S Master Receiver mode, just after enabling the peripheral the clock will be generate
+    *         in continuous way and as the I2S is not disabled at the end of the I2S transaction.
+    * @retval HAL status
+    */
+  //int result = HAL_I2S_Receive(&hi2s2, &readAudioData, sizeof(readAudioData), 1);
+  int result = HAL_I2S_Receive(&hi2s2, &readAudioData, 2, 100);
+
+
 
   if (result == HAL_OK)
   {
     value = 1; // yaay
+    //printf("success\n");
   }
   else
   {
     value = 0; // naay
+    printf("fail, errorcode = %d\n", result);
   }
   return value;
+}
+
+void printBits(size_t const size, void const * const ptr)
+{
+    unsigned char *b = (unsigned char*) ptr;
+    unsigned char byte;
+    int i, j;
+
+    for (i=size-1;i>=0;i--)
+    {
+        for (j=7;j>=0;j--)
+        {
+            byte = (b[i] >> j) & 1;
+            printf("%u", byte);
+        }
+    }
+    puts("");
+    printf("\n");
 }
 /* USER CODE END 4 */
 
