@@ -210,7 +210,6 @@ int main(void)
 		//	write_max(0x01, 0x10, 0x01, 0x0F);
 		//	HAL_Delay(500);
 
-		clearDisplay();
 		fillTest();
 
 	}
@@ -437,45 +436,59 @@ void clearDisplay()
 	}
 }
 
-void enableLed(int offset, int led){
-	int Address = 0; int lowerData = 0;
+void enableLed(int offset, int led, int peak){
+	int Address = 0; int Data = 0;
 	for (int i = 0; i < led + 1; i++){
 		Address = Address | ledArray[i + offset * 4][0];
-		lowerData = lowerData | ledArray[i + offset * 4][1];
+		Data = Data | ledArray[i + offset * 4][1];
 	}
+
 	if (offset < 8){
-		write_max(0, 0, Address, lowerData);
+		write_max(0, 0, Address, Data);
 	}
 	else{
-		write_max(Address, lowerData, 0, 0);
+		write_max(Address, Data, 0, 0);
 	}
 }
-
 void enableLowerBar(){
 	for (int i = 0x0; i <= 0x8; i++) {
 		write_max(0, 0x00, i, 0x0F);
 	}
 }
 
-void fillBarTo(int value) {
+void enablePeak(int peak){
+	int newData = ledArray[peak][1] << 4;
+	if (peak <= 32){
+		write_max(0, 0x00, ledArray[peak][0], newData);
+	}
+	else{
+		write_max(ledArray[peak][0], newData, 0 , 0 );
+	}
+}
+
+void fillBarTo(int average, int peak) {
 	clearDisplay();
-	for (int i = 0; i < value; i++) {
+	for (int i = 0; i < average; i++) {
 		int offset = i / 4;
 		int restValue = i % 4;
 		if (i <= 32){
-			enableLed(offset, restValue);
+			enableLed(offset, restValue, peak);
 		}
 		else {
 			enableLowerBar();
-			enableLed(offset, restValue);
+			enableLed(offset, restValue, peak);
 		}
 	}
+	enablePeak(peak);
 }
 
 void fillTest() {
 	//HAL_Delay(500);
-	int random = rand() % 65;
-	fillBarTo(random);
+	int random = rand() % 60;
+	int peak = random + 5;
+
+	fillBarTo(random, peak);
+	HAL_Delay(100);
 }
 
 void MAX_Init()

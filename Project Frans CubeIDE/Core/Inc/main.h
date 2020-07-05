@@ -43,7 +43,7 @@ void clearDisplay();
 void write_max(uint8_t upperAddress, uint8_t upperValue, uint8_t lowerAddress, uint8_t lowerValue);
 void write_byte (uint8_t byte);
 void fillTest();
-void fillBarTo(int value);
+void fillBarTo(int, int);
 void enableBlock(int blockID, bool isUpper);
 
 
