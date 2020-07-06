@@ -44,8 +44,6 @@ void write_max(uint8_t upperAddress, uint8_t upperValue, uint8_t lowerAddress, u
 void write_byte (uint8_t byte);
 void fillTest();
 void fillBarTo(int, int);
-void enableBlock(int blockID, bool isUpper);
-
 
 
 typedef struct int24{

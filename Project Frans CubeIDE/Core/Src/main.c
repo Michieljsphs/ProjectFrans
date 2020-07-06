@@ -439,7 +439,7 @@ void clearDisplay()
 }
 
 // function that enables the leds
-void enableLed(int offset, int led, int peak){
+void enableLed(int offset, int led){
 	// variable
 	int Address = 0; int Data = 0;
 
@@ -484,6 +484,12 @@ void enablePeak(int peak){
 
 // sets the led bar
 void fillBarTo(int average, int peak) {
+	// Prevent glitches when too high values are sent to ledbar
+	if (average >= 65 || peak >= 65){
+		average = 64;
+		peak = 64;
+	}
+
 	// for good practice clear led bar
 	clearDisplay();
 	// loop trough each number until average led is reached
@@ -494,13 +500,13 @@ void fillBarTo(int average, int peak) {
 
 		// lower part of LedBar
 		if (i <= 32){
-			enableLed(offset, restValue, peak);
+			enableLed(offset, restValue);
 		}
 		// higher part of LedBar
 		else {
 			enableLowerBar(); // turn the whole lower part on
 
-			enableLed(offset, restValue, peak);
+			enableLed(offset, restValue);
 		}
 	}
 	// set peak led
@@ -510,10 +516,10 @@ void fillBarTo(int average, int peak) {
 // test function
 void fillTest() {
 	// generate random number
-	int random = rand() % 60;
+	int random = rand() % 65;
 	// get peak number
 	int peak = random + 5;
-
+	// Fill the led-bar to this number (between 1 and 64)
 	fillBarTo(random, peak);
 	HAL_Delay(100);
 }
