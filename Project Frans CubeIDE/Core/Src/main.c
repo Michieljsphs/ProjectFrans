@@ -474,10 +474,18 @@ void enableLowerBar(){
 // set the peak led on LedBar
 void enablePeak(int peak){
 	int newData = ledArray[peak][1] << 4;
+	if (peak == 50){
+		int banaan = 2;
+	}
 	if (peak <= 32){
 		write_max(0, 0x00, ledArray[peak][0], newData);
 	}
 	else{
+		// shift bits when array data gets to the red part
+		if (peak > 53){
+			newData = newData >> 4;
+		}
+		newData = newData & 0xF0;
 		write_max(ledArray[peak][0], newData, 0 , 0 );
 	}
 }
@@ -485,8 +493,10 @@ void enablePeak(int peak){
 // sets the led bar
 void fillBarTo(int average, int peak) {
 	// Prevent glitches when too high values are sent to ledbar
-	if (average >= 65 || peak >= 65){
+	if (average >= 65){
 		average = 64;
+	}
+	if (peak >= 65){
 		peak = 64;
 	}
 
@@ -522,6 +532,13 @@ void fillTest() {
 	// Fill the led-bar to this number (between 1 and 64)
 	fillBarTo(random, peak);
 	HAL_Delay(100);
+
+	/*
+	for (int i = 0; i < 65; i++){
+		enablePeak(i);
+		HAL_Delay(100);
+	}
+	*/
 }
 
 // setup for the MAX chips
