@@ -47,6 +47,7 @@ SPI_HandleTypeDef hspi3;
 
 UART_HandleTypeDef huart2;
 
+// 2d array first var = adress, second var = value
 int ledArray[64][2] = {
 		{0x08, 0x08},
 		{0x08, 0x04},
@@ -174,6 +175,7 @@ int main(void)
 	MX_SPI3_Init();
 	MX_USART2_UART_Init();
 	/* USER CODE BEGIN 2 */
+
 	MAX_Init(); // setup the max7221 chips
 
 	/* USER CODE END 2 */
@@ -182,35 +184,22 @@ int main(void)
 	/* USER CODE BEGIN WHILE */
 
 
-
+	// main loop
 	while (1)
 	{
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
 
-		HAL_GPIO_TogglePin(LD6_GPIO_Port,LD6_Pin); //Toggle LED
 
-		//	clearDisplay();
-		//	HAL_Delay(500);
-		//	write_max(0x08, 0x10, 0x08, 0x0F);
-		//	HAL_Delay(500);
-		//	write_max(0x07, 0x10, 0x07, 0x0F);
-		//	HAL_Delay(500);
-		//	write_max(0x06, 0x10, 0x06, 0x0F);
-		//	HAL_Delay(500);
-		//	write_max(0x05, 0x10, 0x05, 0x0F);
-		//	HAL_Delay(500);
-		//	write_max(0x04, 0x10, 0x04, 0x0F);
-		//	HAL_Delay(500);
-		//	write_max(0x03, 0x10, 0x03, 0x0F);
-		//	HAL_Delay(500);
-		//	write_max(0x02, 0x10, 0x02, 0x0F);
-		//	HAL_Delay(500);
-		//	write_max(0x01, 0x10, 0x01, 0x0F);
-		//	HAL_Delay(500);
+		 //Toggle LED on chip to indicate that program is running
+		HAL_GPIO_TogglePin(LD6_GPIO_Port,LD6_Pin);
 
+		// run test for LedBar
 		fillTest();
+
+		// Frans add your own code here
+
 
 	}
 	/* USER CODE END 3 */
@@ -403,59 +392,86 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+// PIN Layout
+// GPIOD 2 = load, GPIOD 3 = clk, GPIOD 4 = data
+
+// uses SPI interface to send a single byte
 void write_byte (uint8_t byte)
 {
+	// for 8 bits
 	for (int i =0; i<8; i++)
 	{
-		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_3, 0);  // pull the clock pin low
-		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_4, byte&0x80);  // write the MSB bit to the data pin
-		byte = byte<<1;  // shift left
-		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_3, 1);  // pull the clock pin HIGH
+		// pull the clock pin low
+		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_3, 0);
+		// write the MSB bit to the data pin
+		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_4, byte&0x80);
+		// shift left
+		byte = byte<<1;
+		// pull the clock pin HIGH
+		HAL_GPIO_WritePin (GPIOD, GPIO_PIN_3, 1);
 	}
 }
 
-// GPIOD 2 = load, GPIOD 3 = clk, GPIOD 4 = data
+// sends 4 bytes to the 2 MAX chips
 void write_max(uint8_t upperAddress, uint8_t upperValue, uint8_t lowerAddress, uint8_t lowerValue)
 {
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 0);  // pull the CS pin LOW
+	// pull the CS pin LOW
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 0);
 
-	// Send the register address
+	// Send the register address & value
 	write_byte(upperAddress);
 	write_byte(upperValue);
 	write_byte(lowerAddress);
 	write_byte(lowerValue);
 
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 1);  // pull the CS pin HIGH
+	// pull the CS pin HIGH
+	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, 1);
 }
 
+// clears the LedBar
 void clearDisplay()
 {
+	// loops trough each adress form 0x0 to 0x8
 	for (int i = 0x0; i <= 0x8; i++) {
+		// on the given adress i write zero
 		write_max(i, 0x00, i, 0x00);
-		//delay(50);
 	}
 }
 
+// function that enables the leds
 void enableLed(int offset, int led, int peak){
+	// variable
 	int Address = 0; int Data = 0;
+
+	// checks leds in segments of 4 leds each
 	for (int i = 0; i < led + 1; i++){
+		// if peak led is found put value of peak led in Data varibale
+
+		// OR operation on new adress and old adress
 		Address = Address | ledArray[i + offset * 4][0];
+
+		// OR operation on new Data and old Data so multible leds can be turned on at the same time
 		Data = Data | ledArray[i + offset * 4][1];
 	}
 
+	// first max chip
 	if (offset < 8){
 		write_max(0, 0, Address, Data);
 	}
+	// second max chip
 	else{
 		write_max(Address, Data, 0, 0);
 	}
 }
+
+// enables all the leds in the lower part
 void enableLowerBar(){
 	for (int i = 0x0; i <= 0x8; i++) {
 		write_max(0, 0x00, i, 0x0F);
 	}
 }
 
+// set the peak led on LedBar
 void enablePeak(int peak){
 	int newData = ledArray[peak][1] << 4;
 	if (peak <= 32){
@@ -466,88 +482,65 @@ void enablePeak(int peak){
 	}
 }
 
+// sets the led bar
 void fillBarTo(int average, int peak) {
+	// for good practice clear led bar
 	clearDisplay();
+	// loop trough each number until average led is reached
 	for (int i = 0; i < average; i++) {
+		// calculate offset & rest value
 		int offset = i / 4;
 		int restValue = i % 4;
+
+		// lower part of LedBar
 		if (i <= 32){
 			enableLed(offset, restValue, peak);
 		}
+		// higher part of LedBar
 		else {
-			enableLowerBar();
+			enableLowerBar(); // turn the whole lower part on
+
 			enableLed(offset, restValue, peak);
 		}
 	}
+	// set peak led
 	enablePeak(peak);
 }
 
+// test function
 void fillTest() {
-	//HAL_Delay(500);
+	// generate random number
 	int random = rand() % 60;
+	// get peak number
 	int peak = random + 5;
 
 	fillBarTo(random, peak);
 	HAL_Delay(100);
 }
 
+// setup for the MAX chips
 void MAX_Init()
 {
-	// Run test
-	//  // All LED segments should light up
-	//	write_max(0x0F, 0x01, 0x0F, 0x01);
-	//	HAL_Delay(1000);
-	//	write_max(0x0F, 0x00, 0x0F, 0x00);
-	//
-	//  // Use medium intensity
-	//	write_max(0x0A, 0x07, 0x0A, 0x07);
-	//
-	//  // Turn on chip
-	//	write_max(0x0C, 0x00, 0x0C, 0x00);
-	//	write_max(0x0C, 0x01, 0x0C, 0x01);
-
 	write_max(0x09, 0x00, 0x09, 0x00);       //  no decoding
 	write_max(0x0a, 0x0A, 0x0a, 0x0A);       //  brightness intensity
 	write_max(0x0b, 0x07, 0x0b, 0x07);       //  scan limit = 8 LEDs
 	write_max(0x0c, 0x01, 0x0c, 0x01);       //  power down =0,normal mode = 1
 	write_max(0x0f, 0x00, 0x0f, 0x00);       //  no test display
 
+	// clear LedBar
 	clearDisplay();
 }
 
-
+// read I2S data
 static uint32_t I2SReadData(void)
 {
 	uint32_t value = 0;
 
-	//HAL_StatusTypeDef HAL_I2S_Receive(I2S_HandleTypeDef *hi2s, uint16_t *pData, uint16_t Size, uint32_t Timeout)
-
-	/**
-	 * @brief  Receive an amount of data in blocking mode
-	 * @param  hi2s pointer to a I2S_HandleTypeDef structure that contains
-	 *         the configuration information for I2S module
-	 * @param  pData a 16-bit pointer to data buffer.
-	 * @param  Size number of data sample to be sent:
-	 * @note   When a 16-bit data frame or a 16-bit data frame extended is selected during the I2S
-	 *         configuration phase, the Size parameter means the number of 16-bit data length
-	 *         in the transaction and when a 24-bit data frame or a 32-bit data frame is selected
-	 *         the Size parameter means the number of 16-bit data length.
-	 * @param  Timeout Timeout duration
-	 * @note   The I2S is kept enabled at the end of transaction to avoid the clock de-synchronization
-	 *         between Master and Slave(example: audio streaming).
-	 * @note   In I2S Master Receiver mode, just after enabling the peripheral the clock will be generate
-	 *         in continuous way and as the I2S is not disabled at the end of the I2S transaction.
-	 * @retval HAL status
-	 */
-	//int result = HAL_I2S_Receive(&hi2s2, &readAudioData, sizeof(readAudioData), 1);
 	int result = HAL_I2S_Receive(&hi2s2, &readAudioData, 2, 100);
-
-
 
 	if (result == HAL_OK)
 	{
 		value = 1; // yaay
-		//printf("success\n");
 	}
 	else
 	{
