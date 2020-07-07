@@ -46,10 +46,8 @@ void fillTest();
 void fillBarTo(int, int);
 
 
-typedef struct int24{
-    unsigned int data : 24;
-} int24;
 uint32_t readAudioData;
+
 //int24 readAudioData;
 /* USER CODE END Includes */
 

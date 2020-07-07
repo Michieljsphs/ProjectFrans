@@ -445,12 +445,12 @@ void enableLed(int offset, int led){
 
 	// checks leds in segments of 4 leds each
 	for (int i = 0; i < led + 1; i++){
-		// if peak led is found put value of peak led in Data varibale
+		// if peak led is found put value of peak led in Data variable
 
 		// OR operation on new adress and old adress
 		Address = Address | ledArray[i + offset * 4][0];
 
-		// OR operation on new Data and old Data so multible leds can be turned on at the same time
+		// OR operation on new Data and old Data so multiple leds can be turned on at the same time
 		Data = Data | ledArray[i + offset * 4][1];
 	}
 
@@ -461,13 +461,6 @@ void enableLed(int offset, int led){
 	// second max chip
 	else{
 		write_max(Address, Data, 0, 0);
-	}
-}
-
-// enables all the leds in the lower part
-void enableLowerBar(){
-	for (int i = 0x0; i <= 0x8; i++) {
-		write_max(0, 0x00, i, 0x0F);
 	}
 }
 
@@ -525,7 +518,6 @@ void fillBarTo(int average, int peak) {
 		}
 		// higher part of LedBar
 		else {
-			enableLowerBar(); // turn the whole lower part on
 			enableLed(offset, restValue);
 		}
 	}
