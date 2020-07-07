@@ -473,6 +473,7 @@ void enableLowerBar(){
 
 // set the peak led on LedBar
 void enablePeak(int peak){
+	peak--;
 	int setData = peak % 4, newData = 0;
 
 	// decide which datapacket to use
@@ -503,10 +504,10 @@ void enablePeak(int peak){
 // sets the led bar
 void fillBarTo(int average, int peak) {
 	// Prevent glitches when too high values are sent to ledbar
-	if (average >= 65){
+	if (average > 64){
 		average = 64;
 	}
-	if (peak >= 65){
+	if (peak > 64){
 		peak = 64;
 	}
 
@@ -525,7 +526,6 @@ void fillBarTo(int average, int peak) {
 		// higher part of LedBar
 		else {
 			enableLowerBar(); // turn the whole lower part on
-
 			enableLed(offset, restValue);
 		}
 	}
